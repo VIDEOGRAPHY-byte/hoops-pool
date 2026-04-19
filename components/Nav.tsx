@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/app/(pool)/actions";
+import { useTransition } from "react";
 
 const NAV_ITEMS = [
   { href: "/bracket", label: "🏀 Bracket" },
@@ -13,6 +14,24 @@ const NAV_ITEMS = [
 
 export default function Nav({ displayName }: { displayName: string }) {
   const pathname = usePathname();
+  const [isPending, startTransition] = useTransition();
+
+  function handleSignOut() {
+    const confirmed = window.confirm("Sign out? Your picks stay saved on this device.");
+    if (!confirmed) return;
+    startTransition(async () => {
+      await logout();
+    });
+  }
+
+  const initials = displayName
+    .split(/\s+/)
+    .filter((w) => /[a-zA-Z]/.test(w))
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("") || displayName.slice(0, 1).toUpperCase() || "?";
+
+  const hue = [...displayName].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
   return (
     <nav
@@ -36,28 +55,37 @@ export default function Nav({ displayName }: { displayName: string }) {
           height: 52,
         }}
       >
-        {/* Brand */}
         <span
           style={{
             fontWeight: 800,
-            fontSize: "1.1rem",
+            fontSize: "1rem",
             letterSpacing: "-0.03em",
             marginRight: "0.75rem",
-            color: "var(--accent)",
+            display: "flex",
+            alignItems: "center",
+            gap: "0.35rem",
+            flexShrink: 0,
           }}
         >
-          HP
+          <span
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, var(--accent) 0%, #f97316 100%)",
+              display: "inline-block",
+              flexShrink: 0,
+            }}
+          />
+          <span style={{ color: "var(--text)", whiteSpace: "nowrap" }}>
+            Hoops Pool{" "}
+            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>\u00b7 2026</span>
+          </span>
         </span>
 
-        {/* Nav links */}
         <div
           className="no-scrollbar"
-          style={{
-            display: "flex",
-            gap: "0.1rem",
-            flex: 1,
-            overflowX: "auto",
-          }}
+          style={{ display: "flex", gap: "0.1rem", flex: 1, overflowX: "auto" }}
         >
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
@@ -82,16 +110,35 @@ export default function Nav({ displayName }: { displayName: string }) {
           })}
         </div>
 
-        {/* User + logout */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
-          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", display: "none" }} className="sm-show">
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              background: `hsl(${hue}, 60%, 45%)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "0.68rem",
+              fontWeight: 700,
+              color: "#fff",
+              flexShrink: 0,
+            }}
+          >
+            {initials}
+          </div>
+          <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {displayName}
           </span>
-          <form action={logout}>
-            <button type="submit" className="btn-ghost" style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}>
-              Out
-            </button>
-          </form>
+          <button
+            onClick={handleSignOut}
+            disabled={isPending}
+            className="btn-ghost"
+            style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
+          >
+            {isPending ? "\u2026" : "Sign out"}
+          </button>
         </div>
       </div>
     </nav>
