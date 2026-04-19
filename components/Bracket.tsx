@@ -87,7 +87,7 @@ export default function Bracket({ series, picks }: BracketProps) {
           {renderColumn(series.filter((s) => s.round === 2 && s.conference === "West"))}
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>{renderColumn(series.filter((s) => s.round === 3 && s.conference === "West"))}</div>
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "0.5rem" }}>
-            <span style={{ fontSize: "1.5rem" }}>{"\u{1F3C6}".replace(/\u{([0-9A-F]+)}/gi, (m,c) => String.fromCodePoint(parseInt(c,16)))}</span>
+            <span style={{ fontSize: "1.5rem" }}>🏆</span>
             {finalsGroup?.finals ? (
               <SeriesCard series={finalsGroup.finals} pick={pickMap.get(finalsGroup.finals.id)} oddsMap={oddsMap} showOdds={showOdds} onPickClick={handlePickClick} />
             ) : (
