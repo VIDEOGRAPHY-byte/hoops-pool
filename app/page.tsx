@@ -30,7 +30,7 @@ export default async function LandingPage() {
           Hoops Pool
         </h1>
         <p style={{ color: "var(--text-muted)", marginBottom: "2rem" }}>
-          2025 NBA Playoff Bracket Challenge
+          2026 NBA Playoff Bracket Challenge
         </p>
 
         <div className="card">
