@@ -89,8 +89,12 @@ export default function JoinForm() {
         className="btn-accent"
         style={{ marginTop: "0.25rem", width: "100%", padding: "0.75rem" }}
       >
-        {pending ? "Joining…" : "Enter Pool →"}
+        {pending ? "Joining\u2026" : "Enter Pool \u2192"}
       </button>
+
+      <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--text-dim)", textAlign: "center" }}>
+        Passcode hint: <span style={{ fontFamily: "monospace", letterSpacing: "0.1em", color: "var(--text-muted)" }}>HOOPS2026</span>
+      </p>
     </form>
   );
 }
