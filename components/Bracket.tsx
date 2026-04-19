@@ -18,30 +18,47 @@ interface BracketProps {
 export default function Bracket({ series, picks }: BracketProps) {
   const [showOdds, setShowOdds] = useState(false);
   const [activeSeries, setActiveSeries] = useState<Series | null>(null);
+  const [localPicks, setLocalPicks] = useState<Pick[]>(picks);
   const [toast, setToast] = useState<string | null>(null);
 
-  // Odds map — in real use, would come from a server fetch;
-  // for now we pass an empty map (populated after first cron run)
   const oddsMap = new Map<string, OddsSnapshot>();
-
-  const pickMap = new Map(picks.map((p) => [p.series_id, p]));
+  const pickMap = new Map(localPicks.map((p) => [p.series_id, p]));
   const groups = groupSeriesByRound(series);
+
+  const totalPickable = 15;
+  const picksMade = localPicks.length;
+  const progressPct = (picksMade / totalPickable) * 100;
 
   const handlePickClick = useCallback((s: Series) => {
     setActiveSeries(s);
   }, []);
 
-  const handleSaved = useCallback(() => {
+  const handleSaved = useCallback((seriesId: string, pickedTeamId: string, gamesPrediction?: number) => {
+    setLocalPicks((prev) => {
+      const existing = prev.findIndex((p) => p.series_id === seriesId);
+      const newPick: Pick = {
+        id: `local-${seriesId}`,
+        participant_id: "",
+        series_id: seriesId,
+        picked_team_id: pickedTeamId,
+        games_prediction: gamesPrediction ?? null,
+        locked: false,
+        created_at: new Date().toISOString(),
+      };
+      if (existing >= 0) {
+        const updated = [...prev];
+        updated[existing] = newPick;
+        return updated;
+      }
+      return [...prev, newPick];
+    });
     setActiveSeries(null);
-    setToast("Pick saved! ✓");
+    setToast("Pick saved! \u2713");
   }, []);
 
-  function renderGroup(
-    groupSeries: Series[],
-    conf: "East" | "West"
-  ) {
+  function renderColumn(groupSeries: Series[]) {
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "space-around" }}>
         {groupSeries.map((s) => (
           <SeriesCard
             key={s.id}
@@ -75,24 +92,45 @@ export default function Bracket({ series, picks }: BracketProps) {
     );
   }
 
+  const finalsGroup = groups.find((g) => g.round === 4);
+
   return (
     <div>
-      {/* Controls */}
-      <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      {/* Controls row */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
         <OddsAssistToggle enabled={showOdds} onToggle={setShowOdds} />
-        <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", alignSelf: "center" }}>
-          Tap a series to make or update your pick
+        <span
+          style={{
+            fontSize: "0.8rem",
+            color: "var(--text-muted)",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            padding: "0.3rem 0.7rem",
+          }}
+        >
+          Click any matchup to pick \u00b7 picks lock on submit
         </span>
+        <div style={{ marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "0.25rem" }}>
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)", fontWeight: 600 }}>
+            {picksMade} / 15 picks
+          </span>
+          <div style={{ width: 120, height: 5, background: "var(--border)", borderRadius: 999, overflow: "hidden" }}>
+            <div
+              style={{
+                width: `${progressPct.toFixed(1)}%`,
+                height: "100%",
+                background: "var(--accent)",
+                borderRadius: 999,
+                transition: "width 0.3s ease",
+              }}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Bracket layout */}
-      <div
-        className="no-scrollbar"
-        style={{
-          overflowX: "auto",
-          paddingBottom: "1rem",
-        }}
-      >
+      {/* Bracket grid */}
+      <div className="no-scrollbar" style={{ overflowX: "auto", paddingBottom: "1rem" }}>
         <div
           style={{
             display: "grid",
@@ -101,8 +139,7 @@ export default function Bracket({ series, picks }: BracketProps) {
             minWidth: 1100,
           }}
         >
-          {/* Column headers */}
-          {["R1", "Conf Semis", "Conf Finals", "NBA Finals", "Conf Finals", "Conf Semis", "R1"].map(
+          {["R1 \u00b7 West", "Conf Semis", "Conf Finals", "NBA Finals", "Conf Finals", "Conf Semis", "R1 \u00b7 East"].map(
             (label, i) => (
               <div
                 key={i}
@@ -122,36 +159,18 @@ export default function Bracket({ series, picks }: BracketProps) {
             )
           )}
 
-          {/* East R1 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "space-around" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 1 && s.conference === "East"),
-              "East"
-            )}
-          </div>
-
-          {/* East R2 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "space-around" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 2 && s.conference === "East"),
-              "East"
-            )}
-          </div>
-
-          {/* East CF */}
+          {renderColumn(series.filter((s) => s.round === 1 && s.conference === "West"))}
+          {renderColumn(series.filter((s) => s.round === 2 && s.conference === "West"))}
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 3 && s.conference === "East"),
-              "East"
-            )}
+            {renderColumn(series.filter((s) => s.round === 3 && s.conference === "West"))}
           </div>
 
-          {/* Finals */}
-          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-            {groups.find((g) => g.round === 4)?.finals ? (
+          <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", gap: "0.5rem" }}>
+            <span style={{ fontSize: "1.5rem" }}>\u{1F3C6}</span>
+            {finalsGroup?.finals ? (
               <SeriesCard
-                series={groups.find((g) => g.round === 4)!.finals!}
-                pick={pickMap.get(groups.find((g) => g.round === 4)!.finals!.id)}
+                series={finalsGroup.finals}
+                pick={pickMap.get(finalsGroup.finals.id)}
                 oddsMap={oddsMap}
                 showOdds={showOdds}
                 onPickClick={handlePickClick}
@@ -173,38 +192,19 @@ export default function Bracket({ series, picks }: BracketProps) {
                   fontWeight: 600,
                 }}
               >
-                🏆 Finals
+                NBA Finals
               </div>
             )}
           </div>
 
-          {/* West CF */}
           <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 3 && s.conference === "West"),
-              "West"
-            )}
+            {renderColumn(series.filter((s) => s.round === 3 && s.conference === "East"))}
           </div>
-
-          {/* West R2 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "space-around" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 2 && s.conference === "West"),
-              "West"
-            )}
-          </div>
-
-          {/* West R1 */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", justifyContent: "space-around" }}>
-            {renderGroup(
-              series.filter((s) => s.round === 1 && s.conference === "West"),
-              "West"
-            )}
-          </div>
+          {renderColumn(series.filter((s) => s.round === 2 && s.conference === "East"))}
+          {renderColumn(series.filter((s) => s.round === 1 && s.conference === "East"))}
         </div>
       </div>
 
-      {/* Pick modal */}
       {activeSeries && (
         <PickModal
           series={activeSeries}
@@ -215,13 +215,8 @@ export default function Bracket({ series, picks }: BracketProps) {
         />
       )}
 
-      {/* Toast */}
       {toast && (
-        <Toast
-          message={toast}
-          type="success"
-          onDismiss={() => setToast(null)}
-        />
+        <Toast message={toast} type="success" onDismiss={() => setToast(null)} />
       )}
     </div>
   );
