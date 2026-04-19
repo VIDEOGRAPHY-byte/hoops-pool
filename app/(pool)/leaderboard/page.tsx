@@ -1,5 +1,5 @@
-import { getSession } from "A/lib/auth";
-import { supabase } from "A/lib/supabase";
+import { getSession } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import LeaderboardTable from "@/components/Leaderboard";
 import { scoreParticipant, totalScore, maxPossible } from "@/lib/scoring";
 import type { Participant, Pick, Series, LeaderboardEntry } from "@/lib/types";
