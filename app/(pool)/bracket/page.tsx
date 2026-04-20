@@ -1,12 +1,12 @@
 import { getSession } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import Bracket from "@/components/Bracket";
-import type { Series, Pick, Team } from "@/lib/types";
+import type { Series, Pick, Team, OddsSnapshot } from "@/lib/types";
 
 export const revalidate = 60;
 
 async function getData(participantId: string) {
-  const [seriesRes, picksRes, teamsRes] = await Promise.all([
+  const [seriesRes, picksRes, teamsRes, oddsRes] = await Promise.all([
     supabase
       .from("series")
       .select("*, team_a:teams!series_team_a_id_fkey(*), team_b:teams!series_team_b_id_fkey(*), winner:teams!series_winner_id_fkey(*)")
@@ -17,12 +17,14 @@ async function getData(participantId: string) {
       .select("*")
       .eq("participant_id", participantId),
     supabase.from("teams").select("*"),
+    supabase.from("odds_snapshots").select("*"),
   ]);
 
   return {
     series: (seriesRes.data ?? []) as Series[],
     picks: (picksRes.data ?? []) as Pick[],
     teams: (teamsRes.data ?? []) as Team[],
+    oddsSnapshots: (oddsRes.data ?? []) as OddsSnapshot[],
   };
 }
 
@@ -30,7 +32,7 @@ export default async function BracketPage() {
   const session = await getSession();
   if (!session) return null;
 
-  const { series, picks, teams } = await getData(session.participantId);
+  const { series, picks, teams, oddsSnapshots } = await getData(session.participantId);
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -60,6 +62,7 @@ export default async function BracketPage() {
         series={series}
         picks={picks}
         teams={teams}
+        oddsSnapshots={oddsSnapshots}
         participantId={session.participantId}
       />
     </div>
