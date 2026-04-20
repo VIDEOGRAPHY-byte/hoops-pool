@@ -8,6 +8,9 @@ export interface Team {
   seed: number;
   conference: Conference;
   logo_url?: string;
+  record?: string;
+  stars?: string;
+  blurb?: string;
 }
 
 export interface Series {
