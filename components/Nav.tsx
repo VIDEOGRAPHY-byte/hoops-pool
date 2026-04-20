@@ -8,6 +8,7 @@ import { useTransition } from "react";
 const NAV_ITEMS = [
   { href: "/bracket", label: "ð Bracket" },
   { href: "/leaderboard", label: "ð Board" },
+  { href: "/community", label: "ð¥ Community" },
   { href: "/odds", label: "ð Odds" },
   { href: "/how", label: "â How" },
 ];
@@ -24,6 +25,7 @@ export default function Nav({ displayName }: { displayName: string }) {
     });
   }
 
+  // Derive 1-2 char initials from display name
   const initials = displayName
     .split(/\s+/)
     .filter((w) => /[a-zA-Z]/.test(w))
@@ -31,7 +33,8 @@ export default function Nav({ displayName }: { displayName: string }) {
     .map((w) => w[0].toUpperCase())
     .join("") || displayName.slice(0, 1).toUpperCase() || "?";
 
-  const hue = Array.from(displayName).reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  // Deterministic color from name
+  const hue = [...displayName].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
   return (
     <nav
@@ -55,6 +58,7 @@ export default function Nav({ displayName }: { displayName: string }) {
           height: 52,
         }}
       >
+        {/* Brand */}
         <span
           style={{
             fontWeight: 800,
@@ -77,15 +81,21 @@ export default function Nav({ displayName }: { displayName: string }) {
               flexShrink: 0,
             }}
           />
-          <span style={{ color: "var(--text)", whiteSpace: "nowrap" }}>
+          <span className="nav-brand-text" style={{ color: "var(--text)", whiteSpace: "nowrap" }}>
             Hoops Pool{" "}
-            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>\u00b7 2026</span>
+            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>Â· 2026</span>
           </span>
         </span>
 
+        {/* Nav links */}
         <div
           className="no-scrollbar"
-          style={{ display: "flex", gap: "0.1rem", flex: 1, overflowX: "auto" }}
+          style={{
+            display: "flex",
+            gap: "0.1rem",
+            flex: 1,
+            overflowX: "auto",
+          }}
         >
           {NAV_ITEMS.map((item) => {
             const active = pathname === item.href;
@@ -110,7 +120,9 @@ export default function Nav({ displayName }: { displayName: string }) {
           })}
         </div>
 
+        {/* User chip + logout */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
+          {/* Avatar */}
           <div
             style={{
               width: 28,
@@ -128,7 +140,7 @@ export default function Nav({ displayName }: { displayName: string }) {
           >
             {initials}
           </div>
-          <span style={{ fontSize: "0.82rem", color: "var(--text-muted)", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <span className="nav-user-name" style={{ fontSize: "0.82rem", color: "var(--text-muted)", maxWidth: 90, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {displayName}
           </span>
           <button
@@ -137,7 +149,7 @@ export default function Nav({ displayName }: { displayName: string }) {
             className="btn-ghost"
             style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
           >
-            {isPending ? "\u2026" : "Sign out"}
+            {isPending ? "â¦" : "Sign out"}
           </button>
         </div>
       </div>
