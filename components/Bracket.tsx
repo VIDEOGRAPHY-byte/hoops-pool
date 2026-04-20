@@ -237,7 +237,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
     );
   }
 
-  function hasPich(id: string) { return pickMap.has(id); }
+  function hasPick(id: string) { return pickMap.has(id); }
 
   function R1Col({ ids }: { ids: string[] }) {
     return (
