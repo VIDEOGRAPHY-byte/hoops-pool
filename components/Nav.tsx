@@ -34,7 +34,7 @@ export default function Nav({ displayName }: { displayName: string }) {
     .join("") || displayName.slice(0, 1).toUpperCase() || "?";
 
   // Deterministic color from name
-  const hue = [...displayName].reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
+  const hue = Array.from(displayName).reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360;
 
   return (
     <nav
