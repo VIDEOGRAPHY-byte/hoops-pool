@@ -91,9 +91,11 @@ export default function PickModal({
           background: "var(--bg-card)",
           border: "1px solid var(--border)",
           borderRadius: "var(--radius-lg)",
-          padding: "1.5rem",
+          padding: "1.25rem",
           width: "100%",
           maxWidth: 620,
+          maxHeight: "calc(100dvh - 2rem)",
+          overflowY: "auto",
         }}
       >
         {/* Header */}
@@ -110,7 +112,7 @@ export default function PickModal({
         </div>
 
         {/* Team cards row */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: "0.75rem", marginBottom: "1.25rem", alignItems: "center" }}>
+        <div className="pick-modal-teams" style={{ marginBottom: "1.25rem", alignItems: "center" }}>
           {teams.map((team, idx) => {
             const isSelected = selectedTeam === team.id;
             const accentColor = idx === 0 ? ACCENT_A : ACCENT_B;
