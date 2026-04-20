@@ -60,6 +60,13 @@ export interface Pool {
   picks_locked_at: string | null;
 }
 
+export interface CommunityPick {
+  participantId: string;
+  participantName: string;
+  seriesId: string;
+  pickedTeamId: string;
+}
+
 export interface LeaderboardEntry {
   participant: Participant;
   total_points: number;
