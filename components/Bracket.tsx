@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import type { Series, Pick, Team, OddsSnapshot } from "@/lib/types";
+import type { Series, Pick, Team, OddsSnapshot, CommunityPick } from "@/lib/types";
 import SeriesCard, { CARD_H } from "./SeriesCard";
 import PickModal from "./PickModal";
 import OddsAssistToggle from "./OddsAssistToggle";
@@ -141,9 +141,10 @@ interface BracketProps {
   teams: Team[];
   oddsSnapshots: OddsSnapshot[];
   participantId: string;
+  communityPicks: CommunityPick[];
 }
 
-export default function Bracket({ series, picks, teams, oddsSnapshots }: BracketProps) {
+export default function Bracket({ series, picks, teams, oddsSnapshots, participantId, communityPicks }: BracketProps) {
   const [showOdds, setShowOdds]         = useState(false);
   const [activeSeries, setActiveSeries] = useState<Series | null>(null);
   const [localPicks, setLocalPicks]     = useState<Pick[]>(picks);
@@ -216,6 +217,13 @@ export default function Bracket({ series, picks, teams, oddsSnapshots }: Bracket
   function cardEl(id: string) {
     const eff = effectiveMap.get(id) ?? series.find((s) => s.id === id)!;
     if (!eff) return null;
+    const seriesCommunityPicks = communityPicks
+      .filter((cp) => cp.seriesId === id)
+      .map((cp) => ({
+        name: cp.participantName,
+        teamId: cp.pickedTeamId,
+        isYou: cp.participantId === participantId,
+      }));
     return (
       <SeriesCard
         key={id}
@@ -224,11 +232,12 @@ export default function Bracket({ series, picks, teams, oddsSnapshots }: Bracket
         oddsMap={oddsMap}
         showOdds={showOdds}
         onPickClick={handlePickClick}
+        communityPicks={seriesCommunityPicks}
       />
     );
   }
 
-  function hasPick(id: string) { return pickMap.has(id); }
+  function hasPich(id: string) { return pickMap.has(id); }
 
   function R1Col({ ids }: { ids: string[] }) {
     return (
