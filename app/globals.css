@@ -1,3 +1,117 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap");
+
+:root {
+  --bg: #08080a;
+  --surface: #111116;
+  --bg-card: #16161d;
+  --bg-hover: rgba(255,255,255,0.03);
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.12);
+  --accent: #f97316;            /* NBA orange â primary actions */
+  --accent-dim: #c2550f;
+  --accent-glow: rgba(249,115,22,0.18);
+  --blue: #3b82f6;              /* structural â connectors, picks highlight */
+  --blue-dim: rgba(59,130,246,0.12);
+  --blue-glow: rgba(59,130,246,0.25);
+  --text: #f0f0f4;
+  --text-2: #8b8b99;
+  --text-muted: #8b8b99;
+  --text-dim: #52525e;
+  --text-3: #52525e;
+  --success: #22c55e;
+  --win-dim: rgba(34,197,94,0.10);
+  --error: #ef4444;
+  --east: #3b82f6;
+  --west: #a855f7;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --font: 'DM Sans', system-ui, sans-serif;
+  --mono: 'DM Mono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  background: radial-gradient(
+    ellipse 120% 60% at 50% -10%,
+    rgba(249,115,22,0.07) 0%,
+    transparent 70%
+  ), var(--bg);
+}
+
+a { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+input, select { font-family: inherit; }
+
+/* ââ Scrollbar âââââââââââââââââââââââââââââââââââââââââââââââââ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 3px; }
+
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ââ Card ââââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+/* ââ Accent button âââââââââââââââââââââââââââââââââââââââââââââ */
+.btn-accent {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: background 0.15s;
+}
+.btn-accent:hover { background: var(--accent-dim); }
+.btn-accent:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ââ Ghost button ââââââââââââââââââââââââââââââââââââââââââââââ */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.55rem 1.2rem;
+  font-size: 0.875rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+
+/* ââ Badge âââââââââââââââââââââââââââââââââââââââââââââââââââââ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.badge-east { background: rgba(59,130,246,0.12); color: var(--east); }
+.badge-west { background: rgba(168,85,247,0.12); color: var(--west); }
+.badge-locked { background: rgba(249,115,22,0.12); color: var(--accent); }
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 
 :root {
