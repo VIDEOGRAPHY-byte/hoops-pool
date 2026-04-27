@@ -167,7 +167,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                     >
                       <option value="">â Winner â</option>
                       {[teamA, teamB].filter(Boolean).map((t) => (
-                        <option key={t!.id} value={t!.id}>
+    0                   <option key={t!.id} value={t!.id}>
                           {t!.name}
                         </option>
                       ))}
@@ -196,7 +196,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                       onClick={() => handleSetWinner(s.id, winner, games)}
                       disabled={!winner}
                       className="btn-accent"
-                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+          0           style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
                     >
                       Set Winner
                     </button>
@@ -214,7 +214,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                         onClick={() => handleClearWinner(s.id)}
                         className="btn-ghost"
                         style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", color: "var(--text-muted)" }}
-     0                >
+                      >
                         Clear â
                       </button>
                     )}
