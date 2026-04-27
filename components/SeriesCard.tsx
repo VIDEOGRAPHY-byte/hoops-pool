@@ -211,7 +211,7 @@ export default function SeriesCard({
 
   const hasBothTeams = !!(team_a && team_b);
   const isComplete = !!winner;
-  const canPick = !locked && hasBothTeams;
+  const canPick = hasBothTeams;
   const pickedId = pick?.picked_team_id;
 
   const topWon   = isComplete && winner?.id === team_a?.id;
