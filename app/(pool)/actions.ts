@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabase";
 import { encodeSession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
-// ─── Join Pool ────────────────────────────────────────────────
+// âââ Join Pool ââââââââââââââââââââââââââââââââââââââââââââââââ
 export async function joinPool(formData: FormData) {
   const displayName = (formData.get("displayName") as string)?.trim();
   const passcode = (formData.get("passcode") as string)?.trim().toUpperCase();
@@ -61,7 +61,7 @@ export async function joinPool(formData: FormData) {
   redirect("/bracket");
 }
 
-// ─── Lock Pick ────────────────────────────────────────────────
+// âââ Save Pick ââââââââââââââââââââââââââââââââââââââââââââââââ
 export async function lockPick(formData: FormData) {
   const { getSession } = await import("@/lib/auth");
   const session = await getSession();
@@ -79,17 +79,6 @@ export async function lockPick(formData: FormData) {
 
   const supabase = getAdminClient();
 
-  // Check series is not locked
-  const { data: series } = await supabase
-    .from("series")
-    .select("locked")
-    .eq("id", seriesId)
-    .single();
-
-  if (series?.locked) {
-    throw new Error("This series is locked. Picks are no longer accepted.");
-  }
-
   const { error } = await supabase.from("picks").upsert(
     {
       participant_id: session.participantId,
@@ -104,7 +93,7 @@ export async function lockPick(formData: FormData) {
   if (error) throw new Error(error.message);
 }
 
-// ─── Logout ───────────────────────────────────────────────────
+// âââ Logout âââââââââââââââââââââââââââââââââââââââââââââââââââ
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
