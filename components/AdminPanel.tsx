@@ -25,35 +25,50 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
     winnerId: string,
     games: number
   ) {
-    setStatus((s) => ({ ...s, [seriesId]: "saving…" }));
+    setStatus((s) => ({ ...s, [seriesId]: "savingâ¦" }));
     const res = await fetch("/api/admin/set-winner", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId, winner_id: winnerId, games }),
     });
     if (res.ok) {
-      setStatus((s) => ({ ...s, [seriesId]: "✓ Saved" }));
+      setStatus((s) => ({ ...s, [seriesId]: "â Saved" }));
     } else {
-      setStatus((s) => ({ ...s, [seriesId]: "❌ Error" }));
+      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
+    }
+  }
+
+  async function handleClearWinner(seriesId: string) {
+    if (!confirm("Clear winner and unlock this series?")) return;
+    setStatus((s) => ({ ...s, [seriesId]: "clearingâ¦" }));
+    const res = await fetch("/api/admin/clear-winner", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ series_id: seriesId }),
+    });
+    if (res.ok) {
+      setStatus((s) => ({ ...s, [seriesId]: "â Cleared â reload to see" }));
+    } else {
+      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
     }
   }
 
   async function handleLock(seriesId: string) {
-    setStatus((s) => ({ ...s, [seriesId]: "locking…" }));
+    setStatus((s) => ({ ...s, [seriesId]: "lockingâ¦" }));
     const res = await fetch("/api/admin/lock-series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId }),
     });
     if (res.ok) {
-      setStatus((s) => ({ ...s, [seriesId]: "🔒 Locked" }));
+      setStatus((s) => ({ ...s, [seriesId]: "ð Locked" }));
     } else {
-      setStatus((s) => ({ ...s, [seriesId]: "❌ Error" }));
+      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
     }
   }
 
   async function handleRefreshOdds() {
-    setStatus((s) => ({ ...s, odds: "refreshing…" }));
+    setStatus((s) => ({ ...s, odds: "refreshingâ¦" }));
     const cronSecret = prompt("Enter CRON_SECRET:");
     if (!cronSecret) return;
     const res = await fetch("/api/cron/odds", {
@@ -62,7 +77,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
     const data = await res.json();
     setStatus((s) => ({
       ...s,
-      odds: res.ok ? `✓ ${data.inserted} odds updated` : `❌ ${data.error}`,
+      odds: res.ok ? `â ${data.inserted} odds updated` : `â ${data.error}`,
     }));
   }
 
@@ -135,7 +150,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                   >
                     <span style={{ fontWeight: 600, minWidth: 160 }}>
                       {teamA?.abbreviation ?? "TBD"} vs {teamB?.abbreviation ?? "TBD"}
-                      {s.locked && " 🔒"}
+                      {s.locked && " ð"}
                     </span>
 
                     <select
@@ -150,7 +165,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                         fontSize: "0.875rem",
                       }}
                     >
-                      <option value="">— Winner —</option>
+                      <option value="">â Winner â</option>
                       {[teamA, teamB].filter(Boolean).map((t) => (
                         <option key={t!.id} value={t!.id}>
                           {t!.name}
@@ -193,6 +208,16 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                     >
                       Lock
                     </button>
+
+                    {(s.winner_id || s.locked) && (
+                      <button
+                        onClick={() => handleClearWinner(s.id)}
+                        className="btn-ghost"
+                        style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", color: "var(--text-muted)" }}
+     0                >
+                        Clear â
+                      </button>
+                    )}
 
                     {status[s.id] && (
                       <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
