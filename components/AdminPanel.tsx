@@ -25,50 +25,50 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
     winnerId: string,
     games: number
   ) {
-    setStatus((s) => ({ ...s, [seriesId]: "savingâ¦" }));
+    setStatus((s) => ({ ...s, [seriesId]: "saving…" }));
     const res = await fetch("/api/admin/set-winner", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId, winner_id: winnerId, games }),
     });
     if (res.ok) {
-      setStatus((s) => ({ ...s, [seriesId]: "â Saved" }));
+      setStatus((s) => ({ ...s, [seriesId]: "✓ Saved" }));
     } else {
-      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
+      setStatus((s) => ({ ...s, [seriesId]: "❌ Error" }));
     }
   }
 
   async function handleClearWinner(seriesId: string) {
     if (!confirm("Clear winner and unlock this series?")) return;
-    setStatus((s) => ({ ...s, [seriesId]: "clearingâ¦" }));
+    setStatus((s) => ({ ...s, [seriesId]: "clearing…" }));
     const res = await fetch("/api/admin/clear-winner", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId }),
     });
     if (res.ok) {
-      setStatus((s) => ({ ...s, [seriesId]: "â Cleared â reload to see" }));
+      setStatus((s) => ({ ...s, [seriesId]: "✓ Cleared — reload to see" }));
     } else {
-      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
+      setStatus((s) => ({ ...s, [seriesId]: "❌ Error" }));
     }
   }
 
   async function handleLock(seriesId: string) {
-    setStatus((s) => ({ ...s, [seriesId]: "lockingâ¦" }));
+    setStatus((s) => ({ ...s, [seriesId]: "locking…" }));
     const res = await fetch("/api/admin/lock-series", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId }),
     });
     if (res.ok) {
-      setStatus((s) => ({ ...s, [seriesId]: "ð Locked" }));
+      setStatus((s) => ({ ...s, [seriesId]: "🔒 Locked" }));
     } else {
-      setStatus((s) => ({ ...s, [seriesId]: "â Error" }));
+      setStatus((s) => ({ ...s, [seriesId]: "❌ Error" }));
     }
   }
 
   async function handleRefreshOdds() {
-    setStatus((s) => ({ ...s, odds: "refreshingâ¦" }));
+    setStatus((s) => ({ ...s, odds: "refreshing…" }));
     const cronSecret = prompt("Enter CRON_SECRET:");
     if (!cronSecret) return;
     const res = await fetch("/api/cron/odds", {
@@ -77,7 +77,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
     const data = await res.json();
     setStatus((s) => ({
       ...s,
-      odds: res.ok ? `â ${data.inserted} odds updated` : `â ${data.error}`,
+      odds: res.ok ? `✓ ${data.inserted} odds updated` : `❌ ${data.error}`,
     }));
   }
 
@@ -150,7 +150,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                   >
                     <span style={{ fontWeight: 600, minWidth: 160 }}>
                       {teamA?.abbreviation ?? "TBD"} vs {teamB?.abbreviation ?? "TBD"}
-                      {s.locked && " ð"}
+                      {s.locked && " 🔒"}
                     </span>
 
                     <select
@@ -165,9 +165,9 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                         fontSize: "0.875rem",
                       }}
                     >
-                      <option value="">â Winner â</option>
+                      <option value="">— Winner —</option>
                       {[teamA, teamB].filter(Boolean).map((t) => (
-    0                   <option key={t!.id} value={t!.id}>
+                        <option key={t!.id} value={t!.id}>
                           {t!.name}
                         </option>
                       ))}
@@ -196,7 +196,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                       onClick={() => handleSetWinner(s.id, winner, games)}
                       disabled={!winner}
                       className="btn-accent"
-          0           style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+                      style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
                     >
                       Set Winner
                     </button>
@@ -215,7 +215,7 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
                         className="btn-ghost"
                         style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", color: "var(--text-muted)" }}
                       >
-                        Clear â
+                        Clear ✕
                       </button>
                     )}
 
