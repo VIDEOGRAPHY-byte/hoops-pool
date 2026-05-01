@@ -6,11 +6,12 @@ import { logout } from "@/app/(pool)/actions";
 import { useTransition } from "react";
 
 const NAV_ITEMS = [
-  { href: "/bracket", label: "ð Bracket" },
-  { href: "/leaderboard", label: "ð Board" },
-  { href: "/community", label: "ð¥ Community" },
-  { href: "/odds", label: "ð Odds" },
-  { href: "/how", label: "â How" },
+  { href: "/bracket", label: "🏀 Bracket" },
+  { href: "/leaderboard", label: "🏆 Board" },
+  { href: "/fact-check", label: "🔍 Fact Check" },
+  { href: "/community", label: "👥 Community" },
+  { href: "/odds", label: "📊 Odds" },
+  { href: "/how", label: "❓ How" },
 ];
 
 export default function Nav({ displayName }: { displayName: string }) {
@@ -83,7 +84,7 @@ export default function Nav({ displayName }: { displayName: string }) {
           />
           <span className="nav-brand-text" style={{ color: "var(--text)", whiteSpace: "nowrap" }}>
             Hoops Pool{" "}
-            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>Â· 2026</span>
+            <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>· 2026</span>
           </span>
         </span>
 
@@ -149,7 +150,7 @@ export default function Nav({ displayName }: { displayName: string }) {
             className="btn-ghost"
             style={{ padding: "0.3rem 0.7rem", fontSize: "0.78rem" }}
           >
-            {isPending ? "â¦" : "Sign out"}
+            {isPending ? "…" : "Sign out"}
           </button>
         </div>
       </div>
