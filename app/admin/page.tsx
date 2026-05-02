@@ -5,22 +5,24 @@ import type { Series, Team } from "@/lib/types";
 export const revalidate = 0;
 
 async function getData() {
-  const [seriesRes, teamsRes] = await Promise.all([
+  const [seriesRes, teamsRes, poolRes] = await Promise.all([
     supabase
       .from("series")
       .select("*, team_a:teams!series_team_a_id_fkey(*), team_b:teams!series_team_b_id_fkey(*)")
       .order("round")
       .order("slot"),
     supabase.from("teams").select("*"),
+    supabase.from("pools").select("picks_locked_at").limit(1).single(),
   ]);
   return {
     series: (seriesRes.data ?? []) as Series[],
     teams: (teamsRes.data ?? []) as Team[],
+    poolLocked: !!(poolRes.data?.picks_locked_at),
   };
 }
 
 export default async function AdminPage() {
-  const { series, teams } = await getData();
+  const { series, teams, poolLocked } = await getData();
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "2rem 1rem" }}>
       <h1
@@ -36,7 +38,7 @@ export default async function AdminPage() {
       <p style={{ color: "var(--text-muted)", marginBottom: "2rem", fontSize: "0.875rem" }}>
         Set series winners, lock picks, and refresh odds.
       </p>
-      <AdminPanel series={series} teams={teams} />
+      <AdminPanel series={series} teams={teams} poolLocked={poolLocked} />
     </div>
   );
 }
