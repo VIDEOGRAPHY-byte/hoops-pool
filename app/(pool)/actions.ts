@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabase";
 import { encodeSession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
-// âââ Join Pool ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Join Pool ────────────────────────────────────────────────
 export async function joinPool(formData: FormData) {
   const displayName = (formData.get("displayName") as string)?.trim();
   const passcode = (formData.get("passcode") as string)?.trim().toUpperCase();
@@ -61,7 +61,7 @@ export async function joinPool(formData: FormData) {
   redirect("/bracket");
 }
 
-// âââ Save Pick ââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Save Pick ────────────────────────────────────────────────
 export async function lockPick(formData: FormData) {
   const { getSession } = await import("@/lib/auth");
   const session = await getSession();
@@ -79,6 +79,17 @@ export async function lockPick(formData: FormData) {
 
   const supabase = getAdminClient();
 
+  // Check if pool is locked
+  const { data: pool } = await supabase
+    .from("pools")
+    .select("picks_locked_at")
+    .eq("id", session.poolId)
+    .single();
+
+  if (pool?.picks_locked_at) {
+    throw new Error("Bracket submissions are closed. No changes are allowed.");
+  }
+
   const { error } = await supabase.from("picks").upsert(
     {
       participant_id: session.participantId,
@@ -93,7 +104,7 @@ export async function lockPick(formData: FormData) {
   if (error) throw new Error(error.message);
 }
 
-// âââ Logout âââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ─── Logout ───────────────────────────────────────────────────
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
