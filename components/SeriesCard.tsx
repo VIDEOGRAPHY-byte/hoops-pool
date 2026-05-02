@@ -16,6 +16,7 @@ interface SeriesCardProps {
   showOdds: boolean;
   onPickClick: (series: Series) => void;
   communityPicks?: Array<{ name: string; teamId: string; isYou: boolean }>;
+  poolLocked?: boolean;
 }
 
 // NBA team brand colors keyed by abbreviation
@@ -205,13 +206,14 @@ export default function SeriesCard({
   showOdds,
   onPickClick,
   communityPicks = [],
+  poolLocked = false,
 }: SeriesCardProps) {
   const [hover, setHover] = useState(false);
   const { team_a, team_b, winner, locked } = series;
 
   const hasBothTeams = !!(team_a && team_b);
   const isComplete = !!winner;
-  const canPick = hasBothTeams;
+  const canPick = hasBothTeams && !poolLocked;
   const pickedId = pick?.picked_team_id;
 
   const topWon   = isComplete && winner?.id === team_a?.id;
@@ -310,6 +312,23 @@ export default function SeriesCard({
         oddsMap={oddsMap}
         pickers={botPickers}
       />
+      {/* Pool-locked overlay */}
+      {poolLocked && !isComplete && (
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(0,0,0,0.45)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 'var(--radius)',
+          pointerEvents: 'none',
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.06em' }}>
+            🔒 LOCKED
+          </span>
+        </div>
+      )}
     </div>
   );
 }
