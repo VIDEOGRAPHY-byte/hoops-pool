@@ -15,8 +15,29 @@ const ROUND_LABELS: Record<number, string> = {
   4: "NBA Finals",
 };
 
-export default function AdminPanel({ series, teams }: AdminPanelProps) {
+export default function AdminPanel({ series, teams, poolLocked = false }: AdminPanelProps & { poolLocked?: boolean }) {
   const [status, setStatus] = useState<Record<string, string>>({});
+  const [isPoolLocked, setIsPoolLocked] = useState(poolLocked);
+
+
+  async function handleTogglePoolLock() {
+    const action = isPoolLocked ? "unlock" : "lock";
+    if (!confirm(`${action === "lock" ? "Lock" : "Unlock"} all bracket submissions? ${action === "lock" ? "No user will be able to make changes." : "Users will be able to edit picks again."}`)) return;
+    const adminSecret = prompt("Enter ADMIN_SECRET:");
+    if (!adminSecret) return;
+    setStatus((s) => ({ ...s, poolLock: "saving…" }));
+    const res = await fetch("/api/admin/lock-pool", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-admin-secret": adminSecret },
+      body: JSON.stringify({ locked: !isPoolLocked }),
+    });
+    if (res.ok) {
+      setIsPoolLocked(!isPoolLocked);
+      setStatus((s) => ({ ...s, poolLock: !isPoolLocked ? "🔒 Brackets locked" : "🔓 Brackets unlocked" }));
+    } else {
+      setStatus((s) => ({ ...s, poolLock: "❌ Error — check ADMIN_SECRET" }));
+    }
+  }
 
   const teamMap = new Map(teams.map((t) => [t.id, t]));
 
@@ -111,6 +132,42 @@ export default function AdminPanel({ series, teams }: AdminPanelProps) {
           {status.odds && (
             <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
               {status.odds}
+            </span>
+          )}
+        </div>
+      </div>
+
+
+      {/* Pool lock */}
+      <div className="card" style={{ border: isPoolLocked ? "1px solid rgba(239,68,68,0.3)" : undefined }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 600 }}>
+              {isPoolLocked ? "🔒 Brackets Locked" : "🔓 Brackets Open"}
+            </p>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              {isPoolLocked
+                ? "No users can submit or change picks"
+                : "Users can still edit their picks"}
+            </p>
+          </div>
+          <button
+            onClick={handleTogglePoolLock}
+            className="btn-accent"
+            style={isPoolLocked ? { background: "rgba(239,68,68,0.15)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" } : {}}
+          >
+            {isPoolLocked ? "Unlock Brackets" : "Lock All Brackets"}
+          </button>
+          {status.poolLock && (
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {status.poolLock}
             </span>
           )}
         </div>
