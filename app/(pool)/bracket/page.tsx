@@ -5,8 +5,8 @@ import type { Series, Pick, Team, OddsSnapshot, CommunityPick } from "@/lib/type
 
 export const revalidate = 60;
 
-async function getData(participantId: string) {
-  const [seriesRes, picksRes, teamsRes, oddsRes, allPicksRes] = await Promise.all([
+async function getData(participantId: string, poolId: string) {
+  const [seriesRes, picksRes, teamsRes, oddsRes, allPicksRes, poolRes] = await Promise.all([
     supabase
       .from("series")
       .select("*, team_a:teams!series_team_a_id_fkey(*), team_b:teams!series_team_b_id_fkey(*), winner:teams!series_winner_id_fkey(*)")
@@ -21,6 +21,7 @@ async function getData(participantId: string) {
     supabase
       .from("picks")
       .select("participant_id, series_id, picked_team_id, participants(display_name)"),
+    supabase.from("pools").select("picks_locked_at").eq("id", poolId).single(),
   ]);
 
   const communityPicks: CommunityPick[] = ((allPicksRes.data ?? []) as any[]).map((p) => ({
@@ -36,6 +37,7 @@ async function getData(participantId: string) {
     teams: (teamsRes.data ?? []) as Team[],
     oddsSnapshots: (oddsRes.data ?? []) as OddsSnapshot[],
     communityPicks,
+    poolLocked: !!(poolRes.data?.picks_locked_at),
   };
 }
 
@@ -43,7 +45,7 @@ export default async function BracketPage() {
   const session = await getSession();
   if (!session) return null;
 
-  const { series, picks, teams, oddsSnapshots, communityPicks } = await getData(session.participantId);
+  const { series, picks, teams, oddsSnapshots, communityPicks, poolLocked } = await getData(session.participantId, session.poolId);
 
   return (
     <div style={{ maxWidth: 1200, margin: "0 auto" }}>
@@ -65,9 +67,24 @@ export default async function BracketPage() {
           Your Bracket
         </h1>
         <span style={{ color: "var(--text-muted)", fontSize: "0.875rem" }}>
-          â {session.displayName}
+          — {session.displayName}
         </span>
       </div>
+
+      {poolLocked && (
+        <div style={{
+          marginBottom: "1rem",
+          padding: "0.6rem 1rem",
+          borderRadius: "var(--radius)",
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.25)",
+          color: "#ef4444",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+        }}>
+          🔒 Bracket submissions are closed. No changes can be made.
+        </div>
+      )}
 
       <Bracket
         series={series}
@@ -76,6 +93,7 @@ export default async function BracketPage() {
         oddsSnapshots={oddsSnapshots}
         participantId={session.participantId}
         communityPicks={communityPicks}
+        poolLocked={poolLocked}
       />
     </div>
   );
