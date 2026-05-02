@@ -142,9 +142,10 @@ interface BracketProps {
   oddsSnapshots: OddsSnapshot[];
   participantId: string;
   communityPicks: CommunityPick[];
+  poolLocked?: boolean;
 }
 
-export default function Bracket({ series, picks, teams, oddsSnapshots, participantId, communityPicks }: BracketProps) {
+export default function Bracket({ series, picks, teams, oddsSnapshots, participantId, communityPicks, poolLocked = false }: BracketProps) {
   const [showOdds, setShowOdds]         = useState(false);
   const [activeSeries, setActiveSeries] = useState<Series | null>(null);
   const [localPicks, setLocalPicks]     = useState<Pick[]>(picks);
@@ -233,6 +234,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
         showOdds={showOdds}
         onPickClick={handlePickClick}
         communityPicks={seriesCommunityPicks}
+        poolLocked={poolLocked}
       />
     );
   }
