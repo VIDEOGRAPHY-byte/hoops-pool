@@ -10,6 +10,7 @@ export async function adminLogin(formData: FormData) {
   const actual = process.env.ADMIN_SECRET;
 
   if (!actual || entered !== actual) {
+    // Return error signal via redirect with query param (server actions can't return values directly to forms)
     redirect("/admin?error=1");
   }
 
@@ -17,8 +18,8 @@ export async function adminLogin(formData: FormData) {
   cookieStore.set(ADMIN_COOKIE, entered, {
     httpOnly: true,
     sameSite: "strict",
-    path: "/admin",
-    maxAge: 60 * 60 * 8,
+    path: "/",
+    maxAge: 60 * 60 * 8, // 8 hours
     secure: process.env.NODE_ENV === "production",
   });
 
