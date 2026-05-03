@@ -20,6 +20,7 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
   const [status, setStatus] = useState<Record<string, string>>({});
   const [isPoolLocked, setIsPoolLocked] = useState(poolLocked);
 
+  // Cookie is sent automatically — no secret prompts needed
   async function handleTogglePoolLock() {
     const action = isPoolLocked ? "unlock" : "lock";
     if (!confirm(`${action === "lock" ? "Lock" : "Unlock"} all bracket submissions? ${action === "lock" ? "No user will be able to make changes." : "Users will be able to edit picks again."}`)) return;
@@ -46,7 +47,11 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId, winner_id: winnerId, games }),
     });
-    setStatus((s) => ({ ...s, [seriesId]: res.ok ? "\u2713 Saved" : "\u274C Error" }));
+    if (res.ok) {
+      setStatus((s) => ({ ...s, [seriesId]: "\u2713 Saved" }));
+    } else {
+      setStatus((s) => ({ ...s, [seriesId]: "\u274C Error" }));
+    }
   }
 
   async function handleClearWinner(seriesId: string) {
@@ -57,7 +62,11 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId }),
     });
-    setStatus((s) => ({ ...s, [seriesId]: res.ok ? "\u2713 Cleared \u2014 reload to see" : "\u274C Error" }));
+    if (res.ok) {
+      setStatus((s) => ({ ...s, [seriesId]: "\u2713 Cleared \u2014 reload to see" }));
+    } else {
+      setStatus((s) => ({ ...s, [seriesId]: "\u274C Error" }));
+    }
   }
 
   async function handleLock(seriesId: string) {
@@ -67,7 +76,11 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ series_id: seriesId }),
     });
-    setStatus((s) => ({ ...s, [seriesId]: res.ok ? "\uD83D\uDD12 Locked" : "\u274C Error" }));
+    if (res.ok) {
+      setStatus((s) => ({ ...s, [seriesId]: "\uD83D\uDD12 Locked" }));
+    } else {
+      setStatus((s) => ({ ...s, [seriesId]: "\u274C Error" }));
+    }
   }
 
   async function handleRefreshOdds() {
@@ -85,19 +98,18 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
   }
 
   async function handleRefreshScores() {
-    setStatus((s) => ({ ...s, scores: "refreshing…" }));
+    setStatus((s) => ({ ...s, scores: "refreshing\u2026" }));
     const res = await fetch("/api/admin/refresh-scores", { method: "POST" });
     const data = await res.json();
     if (res.ok) {
       const msg = data.updated > 0
-        ? `✓ ${data.updated} series updated: ${data.results.join(", ")}`
-        : "✓ No new series completed yet";
+        ? `\u2713 ${data.updated} series updated: ${data.results.join(", ")}`
+        : "\u2713 No new series completed yet";
       setStatus((s) => ({ ...s, scores: msg }));
     } else {
-      setStatus((s) => ({ ...s, scores: `❌ ${data.error}` }));
+      setStatus((s) => ({ ...s, scores: `\u274C ${data.error}` }));
     }
   }
-
 
   const byRound = [1, 2, 3, 4].map((r) => ({
     round: r,
@@ -107,23 +119,71 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
+      {/* Odds refresh */}
       <div className="card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+          }}
+        >
           <div>
             <p style={{ fontWeight: 600 }}>Refresh Odds</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Manually trigger the ESPN odds cron</p>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              Manually trigger the ESPN odds cron
+            </p>
           </div>
-          <button onClick={handleRefreshOdds} className="btn-accent">Refresh</button>
-          {status.odds && <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{status.odds}</span>}
+          <button onClick={handleRefreshOdds} className="btn-accent">
+            Refresh
+          </button>
+          {status.odds && (
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {status.odds}
+            </span>
+          )}
         </div>
       </div>
 
-      <div className="card" style={{ border: isPoolLocked ? "1px solid rgba(239,68,68,0.3)" : undefined }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem" }}>
+      {/* Scores refresh */}
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
           <div>
-            <p style={{ fontWeight: 600 }}>{isPoolLocked ? "\uD83D\uDD12 Brackets Locked" : "\uD83D\uDD13 Brackets Open"}</p>
+            <p style={{ fontWeight: 600 }}>Refresh Scores</p>
             <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
-              {isPoolLocked ? "No users can submit or change picks" : "Users can still edit their picks"}
+              Pull latest completed series from ESPN
+            </p>
+          </div>
+          <button onClick={handleRefreshScores} className="btn-accent">
+            Refresh
+          </button>
+          {status.scores && (
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", flex: "1 1 100%" }}>
+              {status.scores}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Pool lock */}
+      <div className="card" style={{ border: isPoolLocked ? "1px solid rgba(239,68,68,0.3)" : undefined }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "1rem",
+          }}
+        >
+          <div>
+            <p style={{ fontWeight: 600 }}>
+              {isPoolLocked ? "\uD83D\uDD12 Brackets Locked" : "\uD83D\uDD13 Brackets Open"}
+            </p>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+              {isPoolLocked
+                ? "No users can submit or change picks"
+                : "Users can still edit their picks"}
             </p>
           </div>
           <button
@@ -133,13 +193,27 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
           >
             {isPoolLocked ? "Unlock Brackets" : "Lock All Brackets"}
           </button>
-          {status.poolLock && <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{status.poolLock}</span>}
+          {status.poolLock && (
+            <span style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+              {status.poolLock}
+            </span>
+          )}
         </div>
       </div>
 
+      {/* Series admin */}
       {byRound.map(({ round, label, series: roundSeries }) => (
         <div key={round}>
-          <h2 style={{ fontWeight: 700, fontSize: "0.85rem", letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: "0.75rem" }}>
+          <h2
+            style={{
+              fontWeight: 700,
+              fontSize: "0.85rem",
+              letterSpacing: "0.07em",
+              textTransform: "uppercase",
+              color: "var(--text-muted)",
+              marginBottom: "0.75rem",
+            }}
+          >
             {label}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -161,8 +235,14 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
   );
 }
 
+// Extracted to avoid hooks-in-map violation
 function SeriesRow({
-  s, teamMap, status, onSetWinner, onLock, onClearWinner,
+  s,
+  teamMap,
+  status,
+  onSetWinner,
+  onLock,
+  onClearWinner,
 }: {
   s: Series;
   teamMap: Map<string, Team>;
@@ -178,46 +258,91 @@ function SeriesRow({
 
   return (
     <div className="card">
-      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+          flexWrap: "wrap",
+        }}
+      >
         <span style={{ fontWeight: 600, minWidth: 160 }}>
-          {teamA?.abbreviation ?? "TBD"} vs {teamB?.abbreviation ?? "TBD"}{s.locked && " \uD83D\uDD12"}
+          {teamA?.abbreviation ?? "TBD"} vs {teamB?.abbreviation ?? "TBD"}
+          {s.locked && " \uD83D\uDD12"}
         </span>
-        <select value={winner} onChange={(e) => setWinner(e.target.value)}
-          style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius)", color: "var(--text)", padding: "0.4rem 0.6rem", fontSize: "0.875rem" }}>
+
+        <select
+          value={winner}
+          onChange={(e) => setWinner(e.target.value)}
+          style={{
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            color: "var(--text)",
+            padding: "0.4rem 0.6rem",
+            fontSize: "0.875rem",
+          }}
+        >
           <option value="">\u2014 Winner \u2014</option>
           {[teamA, teamB].filter(Boolean).map((t) => (
-            <option key={t!.id} value={t!.id}>{t!.name}</option>
+            <option key={t!.id} value={t!.id}>
+              {t!.name}
+            </option>
           ))}
         </select>
-        <select value={games} onChange={(e) => setGames(Number(e.target.value))}
-          style={{ background: "var(--bg)", border: "1px solid var(--border)", borderRadius: "var(--radius)", color: "var(--text)", padding: "0.4rem 0.6rem", fontSize: "0.875rem" }}>
-          {[4, 5, 6, 7].map((g) => <option key={g} value={g}>in {g}</option>)}
+
+        <select
+          value={games}
+          onChange={(e) => setGames(Number(e.target.value))}
+          style={{
+            background: "var(--bg)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+            color: "var(--text)",
+            padding: "0.4rem 0.6rem",
+            fontSize: "0.875rem",
+          }}
+        >
+          {[4, 5, 6, 7].map((g) => (
+            <option key={g} value={g}>
+              in {g}
+            </option>
+          ))}
         </select>
-        <button onClick={() => onSetWinner(s.id, winner, games)} disabled={!winner} className="btn-accent" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}>
+
+        <button
+          onClick={() => onSetWinner(s.id, winner, games)}
+          disabled={!winner}
+          className="btn-accent"
+          style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+        >
           Set Winner
         </button>
-        <button onClick={() => onLock(s.id)} className="btn-ghost" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}>
+
+        <button
+          onClick={() => onLock(s.id)}
+          className="btn-ghost"
+          style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem" }}
+        >
           Lock
         </button>
+
         {(s.winner_id || s.locked) && (
-          <button onClick={() => onClearWinner(s.id)} className="btn-ghost" style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", color: "var(--text-muted)" }}>
+          <button
+            onClick={() => onClearWinner(s.id)}
+            className="btn-ghost"
+            style={{ padding: "0.4rem 0.9rem", fontSize: "0.85rem", color: "var(--text-muted)" }}
+          >
             Clear \u2715
           </button>
         )}
-        {status && <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>{status}</span>}
+
+        {status && (
+          <span style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>
+            {status}
+          </span>
+        )}
       </div>
     </div>
   );
-}      {/* Scores refresh */}
-      <div className="card">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
-          <div>
-            <p style={{ fontWeight: 600 }}>Refresh Scores</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Pull latest completed series from ESPN</p>
-          </div>
-          <button onClick={handleRefreshScores} className="btn-accent">Refresh</button>
-          {status.scores && <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", flex: "1 1 100%" }}>{status.scores}</span>}
-        </div>
-      </div>
-
-
+}
