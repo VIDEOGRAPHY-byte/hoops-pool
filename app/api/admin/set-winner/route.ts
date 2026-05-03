@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
+import { isAdminAuthorized } from "@/lib/adminAuth";
 
 export async function POST(req: Request) {
+  if (!(await isAdminAuthorized(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = await req.json();
   const { series_id, winner_id, games } = body;
 
