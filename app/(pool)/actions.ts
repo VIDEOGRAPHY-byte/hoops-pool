@@ -27,13 +27,22 @@ export async function joinPool(formData: FormData) {
     throw new Error("Invalid passcode. Check with your organiser.");
   }
 
-  // Upsert participant
+  // Reject if name is already taken — prevents session hijack via name collision
+  const { data: existing } = await supabase
+    .from("participants")
+    .select("id")
+    .eq("pool_id", pool.id)
+    .ilike("display_name", displayName)
+    .maybeSingle();
+
+  if (existing) {
+    throw new Error("That name is already taken in this pool. Choose a different name.");
+  }
+
+  // Insert new participant (never upsert — avoids silent account hijacking)
   const { data: participant, error: pErr } = await supabase
     .from("participants")
-    .upsert(
-      { pool_id: pool.id, display_name: displayName },
-      { onConflict: "pool_id,display_name" }
-    )
+    .insert({ pool_id: pool.id, display_name: displayName })
     .select()
     .single();
 
@@ -88,6 +97,23 @@ export async function lockPick(formData: FormData) {
 
   if (pool?.picks_locked_at) {
     throw new Error("Bracket submissions are closed. No changes are allowed.");
+  }
+
+  // Validate that the picked team is actually one of the two teams in this series
+  // (prevents picking an arbitrary team ID for any series)
+  const { data: series } = await supabase
+    .from("series")
+    .select("team_a_id, team_b_id")
+    .eq("id", seriesId)
+    .single();
+
+  if (!series) {
+    throw new Error("Series not found.");
+  }
+
+  const validTeams = [series.team_a_id, series.team_b_id].filter(Boolean);
+  if (!validTeams.includes(pickedTeamId)) {
+    throw new Error("Invalid pick: chosen team is not in this series.");
   }
 
   const { error } = await supabase.from("picks").upsert(
