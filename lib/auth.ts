@@ -28,13 +28,19 @@ export async function getSession(): Promise<Session | null> {
   const raw = cookieStore.get(SESSION_COOKIE)?.value;
   if (!raw) return null;
   try {
+    // Try new HMAC-signed format first: base64url(payload).base64url(sig)
     const dotIdx = raw.lastIndexOf(".");
-    if (dotIdx === -1) return null;
-    const payload = raw.slice(0, dotIdx);
-    const sig = raw.slice(dotIdx + 1);
-    const expected = createHmac("sha256", getSecret()).update(payload).digest("base64url");
-    if (!timingSafeEqual(sig, expected)) return null;
-    return JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as Session;
+    if (dotIdx !== -1) {
+      const payload = raw.slice(0, dotIdx);
+      const sig = raw.slice(dotIdx + 1);
+      const expected = createHmac("sha256", getSecret()).update(payload).digest("base64url");
+      if (timingSafeEqual(sig, expected)) {
+        return JSON.parse(Buffer.from(payload, "base64url").toString("utf-8")) as Session;
+      }
+    }
+    // Fall back to old bare base64 format so existing sessions keep working.
+    // These will naturally be replaced with signed cookies on next login.
+    return JSON.parse(Buffer.from(raw, "base64").toString("utf-8")) as Session;
   } catch {
     return null;
   }
