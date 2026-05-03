@@ -78,12 +78,16 @@ export async function lockPick(formData: FormData) {
 
   const seriesId = formData.get("series_id") as string;
   const pickedTeamId = formData.get("picked_team_id") as string;
-  const gamesPrediction = formData.get("games_prediction")
-    ? Number(formData.get("games_prediction"))
-    : null;
+  const gamesPredictionRaw = formData.get("games_prediction");
+  const gamesPrediction = gamesPredictionRaw ? Number(gamesPredictionRaw) : null;
 
   if (!seriesId || !pickedTeamId) {
     throw new Error("Missing pick data.");
+  }
+
+  // Validate games prediction is within legal range
+  if (gamesPrediction !== null && (isNaN(gamesPrediction) || gamesPrediction < 4 || gamesPrediction > 7)) {
+    throw new Error("games_prediction must be 4, 5, 6, or 7.");
   }
 
   const supabase = getAdminClient();
@@ -100,7 +104,6 @@ export async function lockPick(formData: FormData) {
   }
 
   // Validate that the picked team is actually one of the two teams in this series
-  // (prevents picking an arbitrary team ID for any series)
   const { data: series } = await supabase
     .from("series")
     .select("team_a_id, team_b_id")
