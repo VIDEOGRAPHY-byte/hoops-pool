@@ -84,6 +84,21 @@ export default function AdminPanel({ series, teams, poolLocked = false }: AdminP
     }));
   }
 
+  async function handleRefreshScores() {
+    setStatus((s) => ({ ...s, scores: "refreshing…" }));
+    const res = await fetch("/api/admin/refresh-scores", { method: "POST" });
+    const data = await res.json();
+    if (res.ok) {
+      const msg = data.updated > 0
+        ? `✓ ${data.updated} series updated: ${data.results.join(", ")}`
+        : "✓ No new series completed yet";
+      setStatus((s) => ({ ...s, scores: msg }));
+    } else {
+      setStatus((s) => ({ ...s, scores: `❌ ${data.error}` }));
+    }
+  }
+
+
   const byRound = [1, 2, 3, 4].map((r) => ({
     round: r,
     label: ROUND_LABELS[r],
@@ -193,4 +208,16 @@ function SeriesRow({
       </div>
     </div>
   );
-}
+}      {/* Scores refresh */}
+      <div className="card">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+          <div>
+            <p style={{ fontWeight: 600 }}>Refresh Scores</p>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-muted)" }}>Pull latest completed series from ESPN</p>
+          </div>
+          <button onClick={handleRefreshScores} className="btn-accent">Refresh</button>
+          {status.scores && <span style={{ fontSize: "0.85rem", color: "var(--text-muted)", flex: "1 1 100%" }}>{status.scores}</span>}
+        </div>
+      </div>
+
+
