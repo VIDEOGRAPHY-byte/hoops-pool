@@ -317,7 +317,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
         <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 0, minWidth: 'max-content', padding: '0 4px' }}>
 
           {/* West R1 */}
-          <div><RoundLabel label="R1 Â· West" /><R1Col ids={westR1} /></div>
+          <div><RoundLabel label="R1 &middot; West" /><R1Col ids={westR1} /></div>
 
           {/* West R1âR2 connector */}
           <div style={{ paddingTop: connTop }}>
@@ -401,7 +401,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* East R1 */}
-          <div><RoundLabel label="R1 Â· East" /><R1Col ids={eastR1} /></div>
+          <div><RoundLabel label="R1 &middot; East" /><R1Col ids={eastR1} /></div>
 
         </div>
       </div>
