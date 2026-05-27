@@ -57,7 +57,7 @@ export default async function CommunityPage() {
           Community Picks
         </h1>
         <p style={{ color: "var(--text-muted)", fontSize: "0.875rem", marginTop: "0.3rem" }}>
-          Who the pool is picking â round by round
+          Who the pool is picking &mdash; round by round
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export default async function CommunityPage() {
                             flexShrink: 0,
                           }}
                         >
-                          {s.winner.abbreviation} â
+                          {s.winner.abbreviation} &#x2713;
                         </span>
                       ) : total > 0 ? (
                         <span
@@ -266,7 +266,7 @@ function PickerColumn({
           }}
         >
           {label}
-          {won && " â"}
+          {won && " \u2713"}
         </span>
         {showPct && (
           <span style={{ fontSize: "0.65rem", color: "var(--text-dim)", fontFamily: "var(--mono)" }}>
@@ -278,7 +278,7 @@ function PickerColumn({
       {/* Picker names */}
       <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
         {picks.length === 0 ? (
-          <span style={{ fontSize: "0.68rem", color: "var(--text-dim)" }}>â</span>
+          <span style={{ fontSize: "0.68rem", color: "var(--text-dim)" }}>&mdash;</span>
         ) : (
           picks.map((p) => {
             const isMe = p.participantId === myId;
