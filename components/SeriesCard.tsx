@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Series, Pick, OddsSnapshot } from "@/lib/types";
 
-// Card dimensions â match design constants
+// Card dimensions \u2014 match design constants
 export const CARD_H = 96;   // total height per matchup (2 Ã 48 px team rows)
 const TEAM_H = CARD_H / 2;  // 48 px per team row
 
@@ -168,7 +168,7 @@ function TeamRow({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}>
-            {team ? team.abbreviation : 'â'}
+            {team ? team.abbreviation : '\u2014'}
           </span>
         </div>
         {team && showOdds && winProb && (
@@ -228,9 +228,9 @@ export default function SeriesCard({
   // Score badge label
   const scoreLabel = (() => {
     if (!hasBothTeams) return 'TBD';
-    if ((series as any).wins_a != null) return `${(series as any).wins_a}â${(series as any).wins_b}`;
+    if ((series as any).wins_a != null) return `${(series as any).wins_a}\u2013${(series as any).wins_b}`;
     if (pick?.games_prediction) return `in ${pick.games_prediction}`;
-    return 'Â·';
+    return '\u00B7';
   })();
 
   return (
