@@ -55,7 +55,7 @@ export async function joinPool(formData: FormData): Promise<{ error: string } | 
     .single();
 
   if (pErr || !participant) {
-    return { error: "Could not create participant. Please try again." };
+    return { error: pErr?.message || pErr?.details || "Could not create participant. Please try again." };
   }
 
   // Set session cookie
