@@ -5,16 +5,24 @@ import { redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabase";
 import { encodeSession, SESSION_COOKIE_NAME } from "@/lib/auth";
 
-// ─── Join Pool ────────────────────────────────────────────────
-export async function joinPool(formData: FormData) {
+// ─── Join Pool ────────────────────────────────────────────
+// Returns { error: string } on failure, calls redirect() on success.
+// We RETURN errors rather than throw so Next.js does not replace the message
+// with the generic "Server Components render" text in production.
+export async function joinPool(formData: FormData): Promise<{ error: string } | undefined> {
   const displayName = (formData.get("displayName") as string)?.trim();
   const passcode = (formData.get("passcode") as string)?.trim().toUpperCase();
 
   if (!displayName || !passcode) {
-    throw new Error("Name and passcode are required.");
+    return { error: "Name and passcode are required." };
   }
 
-  const supabase = getAdminClient();
+  let supabase;
+  try {
+    supabase = getAdminClient();
+  } catch {
+    return { error: "Server configuration error. Please contact the organiser." };
+  }
 
   // Verify passcode
   const { data: pool, error: poolErr } = await supabase
@@ -24,7 +32,7 @@ export async function joinPool(formData: FormData) {
     .single();
 
   if (poolErr || !pool) {
-    throw new Error("Invalid passcode. Check with your organiser.");
+    return { error: "Invalid passcode. Check with your organiser." };
   }
 
   // Reject if name is already taken — prevents session hijack via name collision
@@ -36,7 +44,7 @@ export async function joinPool(formData: FormData) {
     .maybeSingle();
 
   if (existing) {
-    throw new Error("That name is already taken in this pool. Choose a different name.");
+    return { error: "That name is already taken in this pool. Choose a different name." };
   }
 
   // Insert new participant (never upsert — avoids silent account hijacking)
@@ -47,7 +55,7 @@ export async function joinPool(formData: FormData) {
     .single();
 
   if (pErr || !participant) {
-    throw new Error("Could not create participant. Please try again.");
+    return { error: "Could not create participant. Please try again." };
   }
 
   // Set session cookie
@@ -70,7 +78,7 @@ export async function joinPool(formData: FormData) {
   redirect("/bracket");
 }
 
-// ─── Save Pick ────────────────────────────────────────────────
+// ─── Save Pick ────────────────────────────────────────────
 export async function lockPick(formData: FormData) {
   const { getSession } = await import("@/lib/auth");
   const session = await getSession();
@@ -133,7 +141,7 @@ export async function lockPick(formData: FormData) {
   if (error) throw new Error(error.message);
 }
 
-// ─── Logout ───────────────────────────────────────────────────
+// ─── Logout ─────────────────────────────────────────────────────
 export async function logout() {
   const cookieStore = await cookies();
   cookieStore.delete(SESSION_COOKIE_NAME);
