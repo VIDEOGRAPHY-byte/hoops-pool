@@ -13,9 +13,14 @@ export default function JoinForm() {
     setError(null);
     startTransition(async () => {
       try {
-        await joinPool(formData);
-        router.refresh();
+        const result = await joinPool(formData);
+        // joinPool returns { error } on failure, calls redirect() on success.
+        if (result?.error) {
+          setError(result.error);
+        }
+        // On success, redirect() fires server-side — navigation handled automatically.
       } catch (e: unknown) {
+        // Fallback for unexpected network/runtime errors.
         setError(e instanceof Error ? e.message : "Something went wrong.");
       }
     });
@@ -89,7 +94,7 @@ export default function JoinForm() {
         className="btn-accent"
         style={{ marginTop: "0.25rem", width: "100%", padding: "0.75rem" }}
       >
-        {pending ? "Joining\u2026" : "Enter Pool \u2192"}
+        {pending ? "Joining…" : "Enter Pool →"}
       </button>
 
       <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--text-dim)", textAlign: "center" }}>
