@@ -1,6 +1,6 @@
 # Security remediation — 10–11 October 2026
 
-Release candidate based on main `0897a78f4d0599c4b5d3c0e0fc34056c94871bd7`. No live Supabase changes or credential rotations were performed. App deployment is held until the coordinated database prerequisites below are approved and verified.
+Release candidate based on main `0897a78f4d0599c4b5d3c0e0fc34056c94871bd7`. No live Supabase changes or credential rotations were performed. App deployment is held until the coordinated database prerequisites below are approved and verified. `vercel.json` disables automatic Git deployment only for the exact audit branch, allowing a draft source review and CI without publishing an incompatible preview. Main deployment behavior is unchanged.
 
 ## Fixed boundaries
 
