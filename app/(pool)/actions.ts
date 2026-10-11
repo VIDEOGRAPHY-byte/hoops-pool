@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { getAdminClient } from "@/lib/supabase";
 import { encodeSession, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from "@/lib/auth";
 
+import { allowAuthAttempt } from "@/lib/auth-attempts";
 import { isUuid, validateSessionConfiguration } from "@/lib/session";
 
 // ─── Join Pool ────────────────────────────────────────────
@@ -28,6 +29,8 @@ export async function joinPool(formData: FormData): Promise<{ error: string } | 
     return { error: "Server configuration error. Please contact the organiser." };
   }
 
+  if (!(await allowAuthAttempt("join"))) return { error: "Please wait 15 minutes before trying again, or contact the organiser." };
+
   // Verify passcode
   const { data: pool, error: poolErr } = await supabase
     .from("pools")
@@ -39,18 +42,6 @@ export async function joinPool(formData: FormData): Promise<{ error: string } | 
     return { error: "Invalid passcode. Check with your organiser." };
   }
 
-  // Reject if name is already taken — prevents session hijack via name collision
-  const { data: existing } = await supabase
-    .from("participants")
-    .select("id")
-    .eq("pool_id", pool.id)
-    .ilike("display_name", displayName)
-    .maybeSingle();
-
-  if (existing) {
-    return { error: "That name is already taken in this pool. Choose a different name." };
-  }
-
   // Insert new participant (never upsert — avoids silent account hijacking)
   const { data: participant, error: pErr } = await supabase
     .from("participants")
@@ -59,7 +50,7 @@ export async function joinPool(formData: FormData): Promise<{ error: string } | 
     .single();
 
   if (pErr || !participant) {
-    return { error: "Could not create participant. Please try again." };
+    return { error: pErr?.code === "23505" ? "That name is reserved. If it is yours, ask the organiser for a recovery code." : "Could not create participant. Please try again." };
   }
 
   // Set session cookie
@@ -68,8 +59,8 @@ export async function joinPool(formData: FormData): Promise<{ error: string } | 
     SESSION_COOKIE_NAME,
     encodeSession({
       participantId: participant.id,
-      displayName: participant.display_name,
       poolId: pool.id,
+      sessionVersion: participant.session_version,
     }),
     {
       httpOnly: true,
@@ -101,7 +92,7 @@ export async function lockPick(formData: FormData) {
   // No fallback to direct upsert if the required migration is not installed.
   const { error } = await getAdminClient().rpc("save_pool_pick", {
     p_participant_id: session.participantId, p_pool_id: session.poolId,
-    p_series_id: seriesId, p_team_id: pickedTeamId, p_games: gamesPrediction,
+    p_series_id: seriesId, p_team_id: pickedTeamId, p_games: gamesPrediction, p_session_version: session.sessionVersion,
   });
   if (error) throw new Error("Pick could not be saved. It may be locked; refresh and try again.");
 }

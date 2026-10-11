@@ -2,8 +2,8 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 
 export interface Session {
   participantId: string;
-  displayName: string;
   poolId: string;
+  sessionVersion: number;
 }
 export const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 export const ADMIN_MAX_AGE = 60 * 60 * 8;
@@ -34,14 +34,15 @@ function decode(raw: string, purpose: string, age: number, key: string, now: num
 }
 export function validateSessionConfiguration(): void { secret("SESSION_SECRET"); }
 export function encodeSession(session: Session, now = Math.floor(Date.now() / 1000)): string {
-  return encode(session, "participant", SESSION_MAX_AGE, secret("SESSION_SECRET"), now);
+  const { participantId, poolId, sessionVersion } = session;
+  return encode({ participantId, poolId, sessionVersion }, "participant", SESSION_MAX_AGE, secret("SESSION_SECRET"), now);
 }
 export function decodeSession(raw: string, now = Math.floor(Date.now() / 1000)): Session | null {
   try {
     const data = decode(raw, "participant", SESSION_MAX_AGE, secret("SESSION_SECRET"), now);
     if (!data || !isUuid(data.participantId) || !isUuid(data.poolId) ||
-        typeof data.displayName !== "string" || !data.displayName.trim() || data.displayName.length > 80) return null;
-    return { participantId: data.participantId, poolId: data.poolId, displayName: data.displayName };
+        !Number.isSafeInteger(data.sessionVersion) || (data.sessionVersion as number) < 0) return null;
+    return { participantId: data.participantId, poolId: data.poolId, sessionVersion: data.sessionVersion as number };
   } catch { return null; }
 }
 export function encodeAdminSession(now = Math.floor(Date.now() / 1000)): string {

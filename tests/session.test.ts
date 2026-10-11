@@ -5,7 +5,7 @@ import { encodeSession, decodeSession, encodeAdminSession, validAdminSession, SE
 import { isCronAuthorized } from "../lib/cronAuth";
 process.env.SESSION_SECRET = "test-session-secret-with-at-least-32-characters";
 process.env.ADMIN_SECRET = "test-admin-secret-with-at-least-32-characters";
-const session = { participantId: "00000000-0000-4000-8000-000000000001", poolId: "00000000-0000-4000-8000-000000000002", displayName: "Fixture" };
+const session = { participantId: "00000000-0000-4000-8000-000000000001", poolId: "00000000-0000-4000-8000-000000000002", sessionVersion: 0 };
 const now = 1800000000;
 test("signed session roundtrip and exact expiration", () => {
   const token = encodeSession(session, now);
@@ -20,7 +20,7 @@ test("unsigned legacy, forged signature, malformed and oversized cookies fail cl
   }
 });
 test("signed claims still require valid identity and purpose", () => {
-  for (const patch of [{ participantId: "other" }, { displayName: [] }, { exp: now - 1 }, { purpose: "admin" }, { exp: now + SESSION_MAX_AGE + 1 }]) {
+  for (const patch of [{ sessionVersion: -1 }, { sessionVersion: undefined }, { participantId: "other" }, { exp: now - 1 }, { purpose: "admin" }, { exp: now + SESSION_MAX_AGE + 1 }]) {
     const payload = Buffer.from(JSON.stringify({ ...session, purpose: "participant", exp: now + 20, ...patch })).toString("base64url");
     const sig = createHmac("sha256", process.env.SESSION_SECRET!).update(payload).digest("base64url");
     assert.equal(decodeSession(`${payload}.${sig}`, now), null);
@@ -65,16 +65,32 @@ test("session requires current membership and fails closed on lookup failure", a
   assert.equal(await resolveSession("unsigned", async () => { lookedUp = true; return true; }), null);
   assert.equal(lookedUp, false);
 });
-test("admin cookie requires exact origin; explicit API credential is independent", async () => {
+test("admin cookie requires exact origin; API credentials use the login throttle", async () => {
   const { adminCredentialsAuthorized } = await import("../lib/session-policy");
   const token = encodeAdminSession();
   const req = (headers: Record<string, string>) => new Request("https://pool.example/api/admin/lock-series", { method: "POST", headers });
-  assert.equal(adminCredentialsAuthorized(req({ origin: "https://pool.example" }), token), true);
+  assert.equal(await adminCredentialsAuthorized(req({ origin: "https://pool.example" }), token), true);
   for (const origin of ["https://attacker.example", "https://pool.example.attacker.example", "null"]) {
-    assert.equal(adminCredentialsAuthorized(req({ origin }), token), false);
+    assert.equal(await adminCredentialsAuthorized(req({ origin }), token), false);
   }
-  assert.equal(adminCredentialsAuthorized(req({}), token), false);
-  assert.equal(adminCredentialsAuthorized(req({ origin: "https://pool.example" }), process.env.ADMIN_SECRET!), false);
-  assert.equal(adminCredentialsAuthorized(req({ "x-admin-secret": process.env.ADMIN_SECRET! }), ""), true);
-  assert.equal(adminCredentialsAuthorized(req({ "x-admin-secret": "wrong" }), ""), false);
+  assert.equal(await adminCredentialsAuthorized(req({}), token), false);
+  assert.equal(await adminCredentialsAuthorized(req({ origin: "https://pool.example" }), process.env.ADMIN_SECRET!), false);
+  assert.equal(await adminCredentialsAuthorized(req({ "x-admin-secret": process.env.ADMIN_SECRET! }), "", async () => true), true);
+  assert.equal(await adminCredentialsAuthorized(req({ "x-admin-secret": "wrong" }), "", async () => true), false);
+});
+
+
+test("admin header attempts share a bounded login budget while valid cookies remain usable", async () => {
+  const { adminCredentialsAuthorized } = await import("../lib/session-policy");
+  let used = 4; // Four login form attempts already committed to the same durable scope.
+  const allow = async (scope: string) => { assert.equal(scope, "admin-login"); return ++used <= 5; };
+  const req = (secret: string, origin?: string) => new Request("https://pool.example/api/admin/recovery", {
+    method: "POST", headers: { "x-admin-secret": secret, ...(origin ? { origin } : {}) },
+  });
+  assert.equal(await adminCredentialsAuthorized(req("wrong"), "", allow), false);
+  assert.equal(await adminCredentialsAuthorized(req(process.env.ADMIN_SECRET!), "", allow), false);
+  assert.equal(used, 6);
+  assert.equal(await adminCredentialsAuthorized(req("wrong", "https://pool.example"), encodeAdminSession(), allow), true);
+  assert.equal(used, 6, "authenticated cookies do not consume the failed-guess budget");
+  assert.equal(await adminCredentialsAuthorized(req(process.env.ADMIN_SECRET!), "", async () => false), false);
 });

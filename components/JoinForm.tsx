@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+
 import { joinPool } from "@/app/(pool)/actions";
 
 export default function JoinForm() {
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
   function formAction(formData: FormData) {
     setError(null);
@@ -67,7 +66,7 @@ export default function JoinForm() {
           id="passcode"
           name="passcode"
           type="text"
-          placeholder="e.g. HOOPS2026"
+          placeholder="Ask your organiser"
           required
           style={{
             width: "100%",
@@ -97,9 +96,7 @@ export default function JoinForm() {
         {pending ? "Joining…" : "Enter Pool →"}
       </button>
 
-      <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--text-dim)", textAlign: "center" }}>
-        Passcode hint: <span style={{ fontFamily: "monospace", letterSpacing: "0.1em", color: "var(--text-muted)" }}>HOOPS2026</span>
-      </p>
+      <a href="/recover">Already joined? Recover your access</a>
     </form>
   );
 }

@@ -1,3 +1,4 @@
+import { allowAuthAttempt } from "./auth-attempts";
 import { decodeSession, matchesSecret, validAdminSession, type Session } from "./session";
 
 export async function resolveSession(raw: string | undefined, memberExists: (session: Session) => Promise<boolean>): Promise<Session | null> {
@@ -7,8 +8,10 @@ export async function resolveSession(raw: string | undefined, memberExists: (ses
   catch { return null; }
 }
 
-export function adminCredentialsAuthorized(req: Request, cookie: string): boolean {
-  if (matchesSecret(req.headers.get("x-admin-secret"), process.env.ADMIN_SECRET)) return true;
-  if (req.headers.get("origin") !== new URL(req.url).origin) return false;
-  return validAdminSession(cookie);
+export async function adminCredentialsAuthorized(req: Request, cookie: string, allowAttempt = allowAuthAttempt): Promise<boolean> {
+  // Existing authenticated organizers stay usable even if anonymous guesses exhaust the budget.
+  if (req.headers.get("origin") === new URL(req.url).origin && validAdminSession(cookie)) return true;
+  const entered = req.headers.get("x-admin-secret");
+  if (entered === null || !(await allowAttempt("admin-login"))) return false;
+  return matchesSecret(entered, process.env.ADMIN_SECRET);
 }

@@ -5,13 +5,15 @@ import { redirect } from "next/navigation";
 
 import { encodeAdminSession, matchesSecret, ADMIN_MAX_AGE } from "@/lib/session";
 
+import { allowAuthAttempt } from "@/lib/auth-attempts";
+
 const ADMIN_COOKIE = "hp_admin_auth";
 
 export async function adminLogin(formData: FormData) {
   const entered = formData.get("secret");
   const actual = process.env.ADMIN_SECRET;
 
-  if (!matchesSecret(entered, actual)) {
+  if (!(await allowAuthAttempt("admin-login")) || !matchesSecret(entered, actual)) {
     // Return error signal via redirect with query param (server actions can't return values directly to forms)
     redirect("/admin?error=1");
   }
