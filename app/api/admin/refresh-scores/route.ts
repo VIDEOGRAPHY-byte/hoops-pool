@@ -4,8 +4,6 @@ import { isAdminAuthorized } from "@/lib/adminAuth";
 
 const ESPN_SCOREBOARD_URL =
   "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?groups=21&limit=100";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = Record<string, any>;
 
 export async function POST(req: Request) {

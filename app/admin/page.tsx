@@ -1,5 +1,7 @@
+import { validAdminSession } from "@/lib/session";
 import { cookies } from "next/headers";
-import { supabase } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
+import RecoveryAdmin from "@/components/RecoveryAdmin";
 import AdminPanel from "@/components/AdminPanel";
 import type { Series, Team } from "@/lib/types";
 import { adminLogin, adminLogout } from "./actions";
@@ -7,7 +9,8 @@ import { adminLogin, adminLogout } from "./actions";
 export const revalidate = 0;
 
 async function getData() {
-  const [seriesRes, teamsRes, poolRes] = await Promise.all([
+  const supabase = getAdminClient();
+  const [seriesRes, teamsRes, poolRes, recoveryPools, recoveryMembers] = await Promise.all([
     supabase
       .from("series")
       .select("*, team_a:teams!series_team_a_id_fkey(*), team_b:teams!series_team_b_id_fkey(*)")
@@ -15,8 +18,12 @@ async function getData() {
       .order("slot"),
     supabase.from("teams").select("*"),
     supabase.from("pools").select("picks_locked_at").limit(1).single(),
+    supabase.from("pools").select("id,name").order("name"),
+    supabase.from("participants").select("id,pool_id,display_name").order("display_name"),
   ]);
   return {
+    pools: recoveryPools.data ?? [],
+    participants: recoveryMembers.data ?? [],
     series: (seriesRes.data ?? []) as Series[],
     teams: (teamsRes.data ?? []) as Team[],
     poolLocked: !!(poolRes.data?.picks_locked_at),
@@ -30,7 +37,7 @@ export default async function AdminPage({
 }) {
   const cookieStore = await cookies();
   const adminCookie = cookieStore.get("hp_admin_auth")?.value;
-  const isAuthed = !!(adminCookie && adminCookie === process.env.ADMIN_SECRET);
+  const isAuthed = validAdminSession(adminCookie ?? "");
   const params = await searchParams;
   const hasError = params?.error === "1";
 
@@ -76,7 +83,7 @@ export default async function AdminPage({
                 marginBottom: "1rem",
               }}
             >
-              Incorrect secret. Try again.
+              Sign-in unavailable or incorrect. Wait 15 minutes before retrying.
             </p>
           )}
           <form action={adminLogin} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -105,7 +112,7 @@ export default async function AdminPage({
     );
   }
 
-  const { series, teams, poolLocked } = await getData();
+  const { series, teams, poolLocked, pools, participants } = await getData();
   return (
     <div style={{ maxWidth: 700, margin: "0 auto", padding: "2rem 1rem" }}>
       <div
@@ -139,6 +146,7 @@ export default async function AdminPage({
         Set series winners, lock picks, and refresh odds.
       </p>
       <AdminPanel series={series} teams={teams} poolLocked={poolLocked} />
+      <RecoveryAdmin pools={pools} participants={participants} />
     </div>
   );
 }

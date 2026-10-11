@@ -8,5 +8,10 @@
       "path": "/api/cron/scores",
       "schedule": "0 10 * * *"
     }
-  ]
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "audit/security-2026-10-10": false
+    }
+  }
 }
