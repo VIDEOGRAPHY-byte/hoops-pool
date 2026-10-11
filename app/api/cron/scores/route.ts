@@ -1,3 +1,4 @@
+import { isCronAuthorized } from "@/lib/cronAuth";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
 
@@ -7,14 +8,11 @@ export const dynamic = "force-dynamic";
 // ESPN NBA playoff scoreboard — groups=21 is the NBA playoffs bracket
 const ESPN_SCOREBOARD_URL =
   "https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?groups=21&limit=100";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = Record<string, any>;
 
 export async function GET(req: Request) {
   // Verify cron secret
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -122,7 +120,7 @@ export async function GET(req: Request) {
 
     const { error } = await supabase
       .from("series")
-      .update({ winner_id: winnerId, games: completion.totalGames })
+      .update({ winner_id: winnerId, games: completion.totalGames, locked: true })
       .eq("id", s.id);
 
     if (!error) {

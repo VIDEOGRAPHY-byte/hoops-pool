@@ -1,11 +1,12 @@
 import { getSession } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import Bracket from "@/components/Bracket";
 import type { Series, Pick, Team, OddsSnapshot, CommunityPick } from "@/lib/types";
 
 export const revalidate = 60;
 
 async function getData(participantId: string, poolId: string) {
+  const supabase = getAdminClient();
   const [seriesRes, picksRes, teamsRes, oddsRes, allPicksRes, poolRes] = await Promise.all([
     supabase
       .from("series")
@@ -17,10 +18,11 @@ async function getData(participantId: string, poolId: string) {
       .select("*")
       .eq("participant_id", participantId),
     supabase.from("teams").select("*"),
-    supabase.from("odds_snapshots").select("*"),
+    supabase.from("odds_snapshots").select("*").order("fetched_at", { ascending: false }).limit(32),
     supabase
       .from("picks")
-      .select("participant_id, series_id, picked_team_id, participants(display_name)"),
+      .select("participant_id, series_id, picked_team_id, participants!inner(display_name, pool_id)")
+      .eq("participants.pool_id", poolId),
     supabase.from("pools").select("picks_locked_at").eq("id", poolId).single(),
   ]);
 

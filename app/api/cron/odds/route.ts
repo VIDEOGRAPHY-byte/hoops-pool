@@ -1,3 +1,4 @@
+import { isCronAuthorized } from "@/lib/cronAuth";
 import { NextResponse } from "next/server";
 import { getAdminClient } from "@/lib/supabase";
 import { fetchEspnOdds } from "@/lib/odds";
@@ -6,8 +7,7 @@ export const runtime = "edge";
 
 export async function GET(req: Request) {
   // Verify cron secret
-  const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import type { Series } from "@/lib/types";
 
 export const revalidate = 60;
@@ -13,7 +13,8 @@ const ROUND_LABELS: Record<number, string> = {
 
 const CONF_ORDER = ["West", "East", "Finals"] as const;
 
-async function getData(myId: string) {
+async function getData(myId: string, poolId: string) {
+  const supabase = getAdminClient();
   const [seriesRes, picksRes] = await Promise.all([
     supabase
       .from("series")
@@ -24,7 +25,8 @@ async function getData(myId: string) {
       .order("slot"),
     supabase
       .from("picks")
-      .select("participant_id, series_id, picked_team_id, participants(display_name)"),
+      .select("participant_id, series_id, picked_team_id, participants!inner(display_name, pool_id)")
+      .eq("participants.pool_id", poolId),
   ]);
 
   const allPicks = ((picksRes.data ?? []) as any[]).map((p) => ({
@@ -45,7 +47,7 @@ export default async function CommunityPage() {
   const session = await getSession();
   if (!session) return null;
 
-  const { series, allPicks, myId } = await getData(session.participantId);
+  const { series, allPicks, myId } = await getData(session.participantId, session.poolId);
 
   const rounds = [1, 2, 3, 4] as const;
 

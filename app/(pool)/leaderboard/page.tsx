@@ -1,15 +1,16 @@
 import { getSession } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import LeaderboardTable from "@/components/Leaderboard";
 import { scoreParticipant, totalScore, maxPossible } from "@/lib/scoring";
 import type { Participant, Pick, Series, LeaderboardEntry } from "@/lib/types";
 
 export const revalidate = 60;
 
-async function getData() {
+async function getData(poolId: string) {
+  const supabase = getAdminClient();
   const [participantsRes, picksRes, seriesRes] = await Promise.all([
-    supabase.from("participants").select("*"),
-    supabase.from("picks").select("*"),
+    supabase.from("participants").select("*").eq("pool_id", poolId),
+    supabase.from("picks").select("*, participants!inner(pool_id)").eq("participants.pool_id", poolId),
     supabase.from("series").select("*"),
   ]);
 
@@ -22,7 +23,8 @@ async function getData() {
 
 export default async function LeaderboardPage() {
   const session = await getSession();
-  const { participants, picks, series } = await getData();
+  if (!session) return null;
+  const { participants, picks, series } = await getData(session.poolId);
 
   const entries: LeaderboardEntry[] = participants
     .map((p) => {

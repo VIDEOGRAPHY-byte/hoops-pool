@@ -14,7 +14,6 @@ export async function fetchEspnOdds(): Promise<EspnOddsItem[]> {
     if (!res.ok) return [];
     const data = await res.json();
     // ESPN returns items array with competitor data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const items: EspnOddsItem[] = (data?.items ?? []).map((item: any) => ({
       teamAbbr: item?.competitor?.abbreviation ?? "",
       championshipOdds: item?.odds?.moneyLine ?? 0,

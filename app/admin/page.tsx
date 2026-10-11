@@ -1,5 +1,6 @@
+import { validAdminSession } from "@/lib/session";
 import { cookies } from "next/headers";
-import { supabase } from "@/lib/supabase";
+import { getAdminClient } from "@/lib/supabase";
 import AdminPanel from "@/components/AdminPanel";
 import type { Series, Team } from "@/lib/types";
 import { adminLogin, adminLogout } from "./actions";
@@ -7,6 +8,7 @@ import { adminLogin, adminLogout } from "./actions";
 export const revalidate = 0;
 
 async function getData() {
+  const supabase = getAdminClient();
   const [seriesRes, teamsRes, poolRes] = await Promise.all([
     supabase
       .from("series")
@@ -30,7 +32,7 @@ export default async function AdminPage({
 }) {
   const cookieStore = await cookies();
   const adminCookie = cookieStore.get("hp_admin_auth")?.value;
-  const isAuthed = !!(adminCookie && adminCookie === process.env.ADMIN_SECRET);
+  const isAuthed = validAdminSession(adminCookie ?? "");
   const params = await searchParams;
   const hasError = params?.error === "1";
 

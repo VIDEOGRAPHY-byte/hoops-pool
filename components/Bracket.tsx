@@ -5,6 +5,7 @@ import type { Series, Pick, Team, OddsSnapshot, CommunityPick } from "@/lib/type
 import SeriesCard, { CARD_H } from "./SeriesCard";
 import PickModal from "./PickModal";
 import OddsAssistToggle from "./OddsAssistToggle";
+import { latestOdds } from "@/lib/latest-odds";
 import Toast from "./Toast";
 
 // ââ Layout constants (from design) ââââââââââââââââââââââââââââââââââââââââââ
@@ -152,7 +153,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
   const [toast, setToast]               = useState<string | null>(null);
 
   const oddsMap = useMemo(
-    () => new Map<string, OddsSnapshot>(oddsSnapshots.map((o) => [o.team_id, o])),
+    () => latestOdds(oddsSnapshots),
     [oddsSnapshots]
   );
   const teamsById = useMemo(
@@ -241,7 +242,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
 
   function hasPick(id: string) { return pickMap.has(id); }
 
-  function R1Col({ ids }: { ids: string[] }) {
+  function renderR1Col({ ids }: { ids: string[] }) {
     return (
       <div style={{ position: 'relative', width: 176, height: COL_H, flexShrink: 0 }}>
         {ids.map((id, i) => (
@@ -253,7 +254,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
     );
   }
 
-  function R2Col({ ids }: { ids: string[] }) {
+  function renderR2Col({ ids }: { ids: string[] }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: COL_H, flexShrink: 0, paddingTop: R2_PAD, gap: R2_GAP }}>
         {ids.map((id) => cardEl(id))}
@@ -261,7 +262,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
     );
   }
 
-  function CFCol({ id }: { id: string }) {
+  function renderCFCol({ id }: { id: string }) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', height: COL_H, flexShrink: 0, paddingTop: CF_PAD }}>
         {cardEl(id)}
@@ -317,7 +318,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
         <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 0, minWidth: 'max-content', padding: '0 4px' }}>
 
           {/* West R1 */}
-          <div><RoundLabel label="R1 &middot; West" /><R1Col ids={westR1} /></div>
+          <div><RoundLabel label="R1 &middot; West" />{renderR1Col({ ids: westR1 })}</div>
 
           {/* West R1âR2 connector */}
           <div style={{ paddingTop: connTop }}>
@@ -325,7 +326,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* West R2 */}
-          <div><RoundLabel label="Conf Semis" /><R2Col ids={westR2} /></div>
+          <div><RoundLabel label="Conf Semis" />{renderR2Col({ ids: westR2 })}</div>
 
           {/* West R2âCF connector */}
           <div style={{ paddingTop: connTop }}>
@@ -333,7 +334,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* West CF */}
-          <div><RoundLabel label="Conf Finals" /><CFCol id={westCFId} /></div>
+          <div><RoundLabel label="Conf Finals" />{renderCFCol({ id: westCFId })}</div>
 
           {/* West CFâFinals connector */}
           <div style={{ paddingTop: connTop }}>
@@ -385,7 +386,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* East CF */}
-          <div><RoundLabel label="Conf Finals" /><CFCol id={eastCFId} /></div>
+          <div><RoundLabel label="Conf Finals" />{renderCFCol({ id: eastCFId })}</div>
 
           {/* East R2âCF connector */}
           <div style={{ paddingTop: connTop }}>
@@ -393,7 +394,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* East R2 */}
-          <div><RoundLabel label="Conf Semis" /><R2Col ids={eastR2} /></div>
+          <div><RoundLabel label="Conf Semis" />{renderR2Col({ ids: eastR2 })}</div>
 
           {/* East R1âR2 connector */}
           <div style={{ paddingTop: connTop }}>
@@ -401,7 +402,7 @@ export default function Bracket({ series, picks, teams, oddsSnapshots, participa
           </div>
 
           {/* East R1 */}
-          <div><RoundLabel label="R1 &middot; East" /><R1Col ids={eastR1} /></div>
+          <div><RoundLabel label="R1 &middot; East" />{renderR1Col({ ids: eastR1 })}</div>
 
         </div>
       </div>
